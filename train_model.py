@@ -1,20 +1,23 @@
-import numpy as np, pandas as pd
+import pandas as pd
 import matplotlib.pyplot as plt
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation
 from keras.layers import Bidirectional, GlobalMaxPool1D
 from keras.models import Model
-import tensorboard
+from keras.callbacks import TensorBoard
+import time
 
-from keras import callbacks
+now = time.strftime("%c")
+
 from keras import initializers, regularizers, constraints, optimizers, layers
 
 train = pd.read_csv('data/train.csv')
 test = pd.read_csv('data/test.csv')
+tensorboard_callback = TensorBoard(log_dir="./logs/train_" + now, histogram_freq=0, write_graph=True,
+                                   write_images=False)
 
 # train.head()
-my_callbacks = []
 list_classes = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 y = train[list_classes].values
 list_sentences_train = train["comment_text"]
@@ -39,10 +42,10 @@ inp = Input(shape=(maxlen,))  # maxlen=200 as defined earlier
 
 embed_size = 128
 x = Embedding(max_features, embed_size)(inp)
-x = LSTM(60, return_sequences=True, name='lstm_layer')(x)
+x = LSTM(50, return_sequences=True, name='lstm_layer')(x)
 x = GlobalMaxPool1D()(x)
 x = Dropout(0.1)(x)
-x = Dense(50, activation="relu")(x)
+x = Dense(40, activation="relu")(x)
 x = Dropout(0.1)(x)
 x = Dense(6, activation="sigmoid")(x)
 
@@ -53,6 +56,7 @@ model.compile(loss='binary_crossentropy',
 
 batch_size = 32
 epochs = 2
-model.fit(X_t, y, batch_size=batch_size, epochs=epochs, validation_split=0.1, verbose=1)
+model.fit(X_t, y, batch_size=batch_size, epochs=epochs, validation_split=0.1, verbose=1,
+          callbacks=[tensorboard_callback])
 
 # model.summary()
