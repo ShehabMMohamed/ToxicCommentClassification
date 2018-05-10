@@ -1,23 +1,20 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation
-from keras.layers import Bidirectional, GlobalMaxPool1D
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout
+from keras.layers import GlobalMaxPool1D
 from keras.models import Model
 from keras.callbacks import TensorBoard
 import time
 
 now = time.strftime("%c")
 
-from keras import initializers, regularizers, constraints, optimizers, layers
-
 train = pd.read_csv('data/train.csv')
 test = pd.read_csv('data/test.csv')
 tensorboard_callback = TensorBoard(log_dir="./logs/train_" + now, histogram_freq=0, write_graph=True,
                                    write_images=False)
 
-# train.head()
+train.head()
 list_classes = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
 y = train[list_classes].values
 list_sentences_train = train["comment_text"]
@@ -34,9 +31,6 @@ X_t = pad_sequences(list_tokenized_train, maxlen=maxlen)
 X_te = pad_sequences(list_tokenized_test, maxlen=maxlen)
 
 totalNumWords = [len(one_comment) for one_comment in list_tokenized_train]
-# plt.hist(totalNumWords,
-#          bins=np.arange(0, 410, 10))  # [0,50,100,150,200,250,300,350,400])#,450,500,550,600,650,700,750,800,850,900])
-# plt.show()
 
 inp = Input(shape=(maxlen,))  # maxlen=200 as defined earlier
 
@@ -44,9 +38,9 @@ embed_size = 128
 x = Embedding(max_features, embed_size)(inp)
 x = LSTM(50, return_sequences=True, name='lstm_layer')(x)
 x = GlobalMaxPool1D()(x)
-x = Dropout(0.1)(x)
+x = Dropout(0.25)(x)
 x = Dense(40, activation="relu")(x)
-x = Dropout(0.1)(x)
+x = Dropout(0.25)(x)
 x = Dense(6, activation="sigmoid")(x)
 
 model = Model(inputs=inp, outputs=x)
@@ -59,4 +53,4 @@ epochs = 2
 model.fit(X_t, y, batch_size=batch_size, epochs=epochs, validation_split=0.1, verbose=1,
           callbacks=[tensorboard_callback])
 
-# model.summary()
+model.summary()
